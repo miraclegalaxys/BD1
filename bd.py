@@ -34,7 +34,6 @@ class BD:
 
 
     def upgrade_pip(self):
-        """Upgrade pip to the latest version."""
         try:
             print("[*] Upgrading pip...")
             subprocess.check_call(
@@ -43,7 +42,7 @@ class BD:
             print("[+] Successfully upgraded pip.")
         except subprocess.CalledProcessError as e:
             print(f"[-] Failed to upgrade pip: {e}")
-            
+
 
     def install_dependencies(self):
 
@@ -72,7 +71,6 @@ class BD:
             
 
         def install_package(package_name):
-            """Install a single package using pip."""
             try:
                 if not is_package_installed(package_name):
                     subprocess.check_call(
@@ -89,9 +87,9 @@ class BD:
         print("[*] Checking and installing required packages...")
         for package in required_packages:
             if not install_package(package):
-                print(f"[!] Skipping further installation due to an error with: {package}")
+                print(f"[!] Skipping error with: {package}")
                 break
-        print("[*] Dependency installation process completed.")
+        print("[*] All Dependency installation process completed.")
 
 
     def execute_sys_cmd(self, cmd):
