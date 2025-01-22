@@ -7,6 +7,20 @@ from typing import Dict
 import os
 import threading
 import time
+import hashlib
+
+class SecureConnection:
+    def __init__(self):
+        self.key = hashlib.sha256(os.urandom(32)).digest()
+        self.session_tokens = {}
+
+    def generate_session_token(self, client_id):
+        token = hashlib.sha256(os.urandom(32)).hexdigest()
+        self.session_tokens[client_id] = token
+        return token
+
+    def verify_token(self, client_id, token):
+        return self.session_tokens.get(client_id) == token
 
 class Allclients:
     def __init__(self, ip, port):
@@ -17,9 +31,7 @@ class Allclients:
         self.clients: Dict[str, socket.socket] = {}
         self.client_details: Dict[str, dict] = {}
         self.active_client = None
-        # self.logger = Logger()
-        # # self.security = SecureConnection()
-        # self.blocked_ips = set()
+        self.security = SecureConnection()
         print(f"[+] Server started on {ip}:{port}")
 
 
@@ -28,6 +40,13 @@ class Allclients:
         try:
             client_info = self.connect_receive(connection)
             client_id = f"{client_info['hostname']}_{address[0]}"
+
+            token = self.security.generate_session_token(client_id)
+            self.connect_send(connection, {"token": token})
+
+            verification = self.connect_receive(connection)
+            if verification == token:
+                print(f"[+] Token verified for {client_id}")
 
             self.clients[client_id] = connection
             self.client_details[client_id] = {
