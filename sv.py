@@ -264,7 +264,7 @@ Available Commands:
     allclients            - Send command all clients (OK)
     shutdown              - Shutdown client machine (OK)
     reboot                - Reboot client machine (OK)
-    sysinfo               - Get system information (In Processing)
+    sysinfo               - Get system information (OK)
     cd <path>             - Change working directory (OK but still lose stable)
 
   Evade & Hide:
@@ -298,7 +298,7 @@ Available Commands:
                 if base_cmd == "help":
                     self.show_help()
 
-                elif base_cmd == "list":
+                elif base_cmd == "lists":
                     self.list_clients()
 
                 elif base_cmd == "select":

