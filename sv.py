@@ -82,11 +82,22 @@ class Allclients:
                 print(f"[-] Client {client_id} has disconnected.")
 
 
+    # def list_clients(self):
+    #     print("\n=== Connected Clients ===")
+    #     for i, (client_id, details) in enumerate(self.client_details.items(), 1):
+    #         active = "*" if client_id == self.active_client else " "
+    #         print(f"[{i}]{active} {client_id}")
+    #     print("======================")
+
     def list_clients(self):
         print("\n=== Connected Clients ===")
         for i, (client_id, details) in enumerate(self.client_details.items(), 1):
             active = "*" if client_id == self.active_client else " "
-            print(f"[{i}]{active} {client_id}")
+            print(f"[{i}]{active} {client_id}:")
+            print(f"    IP: {details['ip']}")
+            print(f"    OS: {details['os']}")
+            print(f"    User: {details['user']}")
+            print(f"    Connected: {details['connected_time']}\n")
         print("======================")
 
     def select_client(self, selection: str):
@@ -123,15 +134,12 @@ class Allclients:
         json_data = ""
         while True:
             try:
-                connection.settimeout(10)
-                part_packets = connection.recv(1024).decode()
+                part_packets = connection.recv(1024).decode('utf-8', errors='ignore')
                 if not part_packets:
                     break
                 json_data += part_packets
                 try:
                     return json.loads(json_data)
-                except socket.timeout:
-                    raise Exception("Connection timed out.")
                 except ValueError:
                     continue
             except Exception as e:
