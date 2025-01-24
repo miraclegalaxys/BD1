@@ -134,7 +134,7 @@ class Allclients:
         json_data = ""
         while True:
             try:
-                part_packets = connection.recv(1024).decode('utf-8', errors='ignore')
+                part_packets = connection.recv(4096).decode()
                 if not part_packets:
                     break
                 json_data += part_packets

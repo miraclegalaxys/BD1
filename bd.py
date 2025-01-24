@@ -142,7 +142,7 @@ class BD:
         json_data = ""
         while True:
             try:
-                packet_parts = self.connection.recv(1024).decode()
+                packet_parts = self.connection.recv(4096).decode()
                 if not packet_parts:
                     self.reconnect()
                     continue
