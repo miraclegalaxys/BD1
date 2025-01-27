@@ -34,12 +34,13 @@ class Allclients:
         self.active_client = None
         self.security = SecureConnection()
         ascii_art = """
-    BBBBB   DDDD    111
-    B   B   D   D    11
-    BBBBB   D   D    11
-    B   B   D   D    11
-    BBBBB   DDDD    111
-    """
+            ██████╗ ██████╗  ██╗
+            ██╔══██╗██╔══██╗███║
+            ██████╔╝██║  ██║╚██║
+            ██╔══██╗██║  ██║ ██║
+            ██████╔╝██████╔╝ ██║
+            ╚═════╝ ╚═════╝  ╚═╝
+                """
         print(ascii_art)
         print("Version: BETA 1.0 DEV by galaxys\n")
         print(f"[+] Server started on {ip}:{port}")
