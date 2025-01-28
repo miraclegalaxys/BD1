@@ -42,7 +42,7 @@ class Allclients:
             ╚═════╝ ╚═════╝  ╚═╝
                 """
         print(ascii_art)
-        print("Version: BETA 1.0 DEV by galaxys\n")
+        print("Version: BETA 1.0 DEV by ggalaxys_\n")
         print(f"[+] Server started on {ip}:{port}")
 
 
