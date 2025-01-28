@@ -111,6 +111,11 @@ BD1 is a Python-based network management utility designed for system administrat
 python sv.py
 ```
 
+## Example Session
+![Example1](picture/BD1.1.png)
+![Example2](picture/BD1.2.png)
+
+
 ### Key Commands
 - `help`: Display available commands
 
