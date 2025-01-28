@@ -139,8 +139,12 @@ Ensure all contributions:
 
 ## License
 
-- MIT License
+- [MIT License](LICENSE)
 
 ## Disclaimer
 
 "This tool is provided strictly for educational purposes. Any misuse or application outside the scope of this study is beyond my responsibility. Please note that any errors or inaccuracies resulting from its use are not attributable to me."
+
+## Author
+
+By ggalaxys_
