@@ -114,7 +114,7 @@ python sv.py
 ## Example Session
 ![Example1](picture/BD1.1.png)
 ![Example2](picture/BD1.2.png)
-
+Example Video: https://drive.google.com/file/d/1wIdZln-bsrQNyoDX2WS7BtI_p1Z2dDdu/view?usp=sharing
 
 ### Key Commands
 - `help`: Display available commands
