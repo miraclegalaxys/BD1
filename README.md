@@ -30,7 +30,7 @@ BD1 is a Python-based network management utility designed for system administrat
 #### General Commands
 - `help`: Show all available commands
 
-- `list`: Display connected clients
+- `lists`: Display connected clients
 - `select <client_id>`: Target specific client
 - `exit`: Close server connection
 

